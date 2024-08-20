@@ -31,7 +31,6 @@ while True:
             if event.key == pygame.K_LEFT:
                 mm_x[1] = True
             elif event.key == pygame.K_RIGHT:
-                print(x)
                 mm_x[0] = True
             elif event.key == pygame.K_UP:
                 mm_y[1] = True
