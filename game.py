@@ -1,6 +1,7 @@
 import pygame
 import socket
 import threading
+import tkinter
 
 # Kết nối tới server
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
