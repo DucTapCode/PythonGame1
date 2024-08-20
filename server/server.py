@@ -1,7 +1,6 @@
 import socket
 import threading
 import json
-import sys
 
 # Variables
 Host_ip = "0.0.0.0"
@@ -17,13 +16,14 @@ clients = []
 online_players = []
 rooms = []
 
-
 # Function to handle individual client
 def handle_client(client):
     try:
         while True:
             message = client.recv(1024).decode("utf-8")
-            if message == "room_name":
+            if message.startswith("coords"):
+                broadcast(message, client)
+            elif message == "room_name":
                 room_name = create_room(client)
                 if room_name:
                     client.send(f"Room {room_name} created".encode("utf-8"))
@@ -37,6 +37,14 @@ def handle_client(client):
         clients.remove(client)
         print(f"Connection {client.getpeername()} closed")
 
+# Function to broadcast messages to all clients except the sender
+def broadcast(message, sender):
+    for client in clients:
+        if client != sender:
+            try:
+                client.send(message.encode("utf-8"))
+            except Exception as e:
+                print(f"Error broadcasting message: {str(e)}")
 
 # Function to receive connections
 def receive():
@@ -49,14 +57,12 @@ def receive():
         thread = threading.Thread(target=handle_client, args=(client,))
         thread.start()
 
-
 # Function to load players from JSON file
 def load_players():
     with open("..\data\player.json", "r") as file:
         data = json.load(file)
         for user in data:
             online_players.append(user["username"])
-
 
 # Function to create a room
 def create_room(client):
@@ -69,7 +75,6 @@ def create_room(client):
     except Exception as e:
         print(f"Room creation failed: {str(e)}")
     return None
-
 
 # Main server loop
 if __name__ == "__main__":
