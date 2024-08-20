@@ -2,7 +2,6 @@ import pygame
 import socket
 import threading
 
-# Connect to server
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect(('116.106.225.168', 1512))
 
@@ -17,9 +16,7 @@ x = 5
 y = 5
 mm_x = [False, False]
 mm_y = [False, False]
-other_x, other_y = 5, 5  # Position of the other player
-
-# Function to receive data from the server
+other_x, other_y = 5, 5 
 def receive_data():
     global other_x, other_y
     while True:
@@ -32,7 +29,6 @@ def receive_data():
             print(f"Error receiving data: {str(e)}")
             break
 
-# Start the receive data thread
 threading.Thread(target=receive_data, daemon=True).start()
 
 while True:
@@ -41,7 +37,6 @@ while True:
     if y + (mm_y[0] - mm_y[1]) * velo > 0 and y + (mm_y[0] - mm_y[1]) * velo < 630:
         y += (mm_y[0] - mm_y[1]) * velo
 
-    # Send the current coordinates to the server
     client.send(f"coords {x} {y}".encode("utf-8"))
 
     for event in pygame.event.get():
@@ -69,7 +64,7 @@ while True:
                 mm_y[0] = False
 
     scr.fill((0, 255, 0))
-    scr.blit(kaoruka, (x, y))  # Draw the current player
-    scr.blit(kaoruka, (other_x, other_y))  # Draw the other player
+    scr.blit(kaoruka, (x, y))
+    scr.blit(kaoruka, (other_x, other_y))
     pygame.display.flip()
     clock.tick(FPS)
