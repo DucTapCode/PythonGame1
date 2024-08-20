@@ -9,6 +9,8 @@ client.connect(("116.106.225.168", 1512))
 pygame.init()
 pygame.display.set_caption("tnhthatbongcon")
 scr = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+width, height = scr.get_size()
+
 FPS = 60
 clock = pygame.time.Clock()
 kaoruka = pygame.image.load("8834c0656673ed3f08cb42ecbbe30701-removebg-preview (1).png")
@@ -42,7 +44,7 @@ threading.Thread(target=receive_data, daemon=True).start()
 while True:
     moved = False
 
-    if x + (mm_x[0] - mm_x[1]) * velo > 0 and x + (mm_x[0] - mm_x[1]) * velo < 1270:
+    if x + (mm_x[0] - mm_x[1]) * velo > 0 and x + (mm_x[0] - mm_x[1]) * velo < width-kaoruka_wid:
         x += (mm_x[0] - mm_x[1]) * velo
         moved = True
     if y + (mm_y[0] - mm_y[1]) * velo > 0 and y + (mm_y[0] - mm_y[1]) * velo < 630:
