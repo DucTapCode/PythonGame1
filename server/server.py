@@ -30,7 +30,6 @@ def handle_client(client):
     finally:
         client.close()
         clients.remove(client)
-        print(f"Connection {client.getpeername()} closed")
 
 def broadcast(message, sender):
     for client in clients:
