@@ -17,16 +17,14 @@ def handle_client(client):
     try:
         while True:
             message = client.recv(1024).decode("utf-8")
-            room_info = json.loads(message)
-            
-            if "room_name" in room_info and "password" in room_info:
-                room_name = create_room(client, room_info)
+            if message.startswith("coords"):
+                broadcast(message, client)
+            elif message == "room_name":
+                room_name = create_room(client)
                 if room_name:
                     client.send(f"Room {room_name} created".encode("utf-8"))
                 else:
                     client.send("Room creation failed".encode("utf-8"))
-            elif message.startswith("coords"):
-                broadcast(message, client)
     except ConnectionResetError:
         print(f"Client {client.getpeername()} disconnected abruptly.")
     except OSError as e:
@@ -37,6 +35,7 @@ def handle_client(client):
         client.close()
         print(f"Connection {client.getpeername()} closed")
 
+
 def broadcast(message, sender):
     for client in clients:
         if client != sender:
@@ -44,7 +43,6 @@ def broadcast(message, sender):
                 client.send(message.encode("utf-8"))
             except Exception as e:
                 print(f"Error broadcasting message: {str(e)}")
-
 def receive():
     global client
     while True:
@@ -61,15 +59,12 @@ def load_players():
         for user in data:
             online_players.append(user["username"])
 
-def create_room(room_info):
+def create_room(client):
     try:
-        room_name = room_info["room_name"].strip()
-        password = room_info["password"].strip()
+        client.send("Enter room name:".encode("utf-8"))
+        room_name = client.recv(1024).decode("utf-8").strip()
         if room_name:
-            rooms.append({"room_name": room_name, "password": password})
-            
-            print("Tạo phòng thành công")
-            print(f"{room_name}\n{password}")
+            rooms.append({"room_name": room_name})
             return room_name
     except Exception as e:
         print(f"Room creation failed: {str(e)}")

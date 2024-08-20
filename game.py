@@ -9,12 +9,12 @@ client.connect(("116.106.225.168", 1512))
 
 pygame.init()
 pygame.display.set_caption("tnhthatbongcon")
-scr = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+scr = pygame.display.set_mode((1100,550))
 width, height = scr.get_size()
 
 FPS = 60
 clock = pygame.time.Clock()
-kaoruka = pygame.image.load("8834c0656673ed3f08cb42ecbbe30701-removebg-preview (1).png")
+kaoruka = pygame.image.load("player.png")
 kaoruka_wid = kaoruka.get_width()
 kaoruka_hei = kaoruka.get_height()
 velo = 7
