@@ -2,6 +2,7 @@ import pygame
 import socket
 import threading
 import tkinter
+from Python.Online.PythonGame1.login import WHITE
 
 # Kết nối tới server
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -89,7 +90,7 @@ while True:
                 mm_y[0] = False
 
     # Vẽ lại màn hình với các vị trí mới
-    scr.fill((0, 255, 0))
+    scr.fill(WHITE)
     scr.blit(kaoruka, (x, y))  # Vẽ người chơi hiện tại
     scr.blit(kaoruka, (other_x, other_y))  # Vẽ người chơi khác
     pygame.display.flip()
