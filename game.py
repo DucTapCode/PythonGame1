@@ -14,8 +14,8 @@ width, height = scr.get_size()
 FPS = 60
 clock = pygame.time.Clock()
 kaoruka = pygame.image.load("8834c0656673ed3f08cb42ecbbe30701-removebg-preview (1).png")
-kaoruka_wid=kaoruka.get_width()
-kaoruka_hei=kaoruka.get_height()
+kaoruka_wid = kaoruka.get_width()
+kaoruka_hei = kaoruka.get_height()
 velo = 7
 x = 5
 y = 5
@@ -46,10 +46,16 @@ threading.Thread(target=receive_data, daemon=True).start()
 while True:
     moved = False
 
-    if x + (mm_x[0] - mm_x[1]) * velo > 0 and x + (mm_x[0] - mm_x[1]) * velo < width-kaoruka_wid:
+    if (
+        x + (mm_x[0] - mm_x[1]) * velo > 0
+        and x + (mm_x[0] - mm_x[1]) * velo < width - kaoruka_wid
+    ):
         x += (mm_x[0] - mm_x[1]) * velo
         moved = True
-    if y + (mm_y[0] - mm_y[1]) * velo > 0 and y + (mm_y[0] - mm_y[1]) * velo < height-kaoruka_hei:
+    if (
+        y + (mm_y[0] - mm_y[1]) * velo > 0
+        and y + (mm_y[0] - mm_y[1]) * velo < height - kaoruka_hei
+    ):
         y += (mm_y[0] - mm_y[1]) * velo
         moved = True
 

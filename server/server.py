@@ -13,6 +13,7 @@ clients = []
 online_players = []
 rooms = []
 
+
 def handle_client(client):
     try:
         while True:
@@ -25,11 +26,16 @@ def handle_client(client):
                     client.send(f"Room {room_name} created".encode("utf-8"))
                 else:
                     client.send("Room creation failed".encode("utf-8"))
-    except Exception as e:
-        print(f"Error: {str(e)}")
+    except ConnectionResetError:
+        print(f"Client {client.getpeername()} disconnected abruptly.")
+    except OSError as e:
+        print(f"OSError: {str(e)}")
     finally:
+        if client in clients:
+            clients.remove(client)
         client.close()
-        clients.remove(client)
+        print(f"Connection {client.getpeername()} closed")
+
 
 def broadcast(message, sender):
     for client in clients:
@@ -38,6 +44,8 @@ def broadcast(message, sender):
                 client.send(message.encode("utf-8"))
             except Exception as e:
                 print(f"Error broadcasting message: {str(e)}")
+
+
 def receive():
     global client
     while True:
@@ -48,11 +56,13 @@ def receive():
         thread = threading.Thread(target=handle_client, args=(client,))
         thread.start()
 
+
 def load_players():
     with open("..\data\player.json", "r") as file:
         data = json.load(file)
         for user in data:
             online_players.append(user["username"])
+
 
 def create_room(client):
     try:
@@ -64,6 +74,7 @@ def create_room(client):
     except Exception as e:
         print(f"Room creation failed: {str(e)}")
     return None
+
 
 if __name__ == "__main__":
     print("Server is listening...")
