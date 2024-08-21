@@ -46,10 +46,10 @@ client = connect_to_server()
 if client:
     pygame.init()
     pygame.display.set_caption("tnhthatbongcon")
-    scr = pygame.display.set_mode((1920, 1080), pygame.NOFRAME)
+    scr = pygame.display.set_mode((1350, 700), pygame.NOFRAME)
     width, height = scr.get_size()
 
-    FPS = 60
+    FPS = 144
     clock = pygame.time.Clock()
     img = pygame.image.load("player.png")
     main = Player(img)
