@@ -1,3 +1,4 @@
+import os
 import socket
 import threading
 import json
@@ -94,5 +95,5 @@ if __name__ == "__main__":
     load_players()
     try:
         receive()
-    except Exception as e:
-        print(f"Error: {str(e)}")
+    except (Exception,OSError) as e:
+        print("Đã xảy ra một số lỗi")

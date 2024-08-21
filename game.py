@@ -46,6 +46,7 @@ def receive_data():
             message = client.recv(1024).decode("utf-8")
             if message.startswith("coords"):
                 parts = message.split()
+                print(parts)
                 if len(parts) == 4:
                     _, received_x, received_y, received_direction = parts
                     main.other_x, main.other_y = int(received_x), int(received_y)
@@ -105,7 +106,7 @@ while True:
     scr.fill((0, 255, 0))
     if(main.previous_x<main.x):
         main.direction=True
-    elif(main.previous_x>main.x):
+    if(main.previous_x>main.x):
         main.direction=False
     if main.direction:
         scr.blit(pygame.transform.flip(main.img, True, False), (main.x, main.y))
