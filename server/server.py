@@ -2,7 +2,6 @@ import socket
 import threading
 import json
 import sys
-
 # Variables
 Host_ip = "0.0.0.0"
 Host_port = 1512
@@ -18,8 +17,9 @@ online_players = []
 rooms = []
 
 # Function to handle individual client
-def handle_client(client):
+def handle_client(client, address):
     try:
+        formatted_address = f"{address[0]}:{address[1]}"
         while True:
             message = client.recv(1024).decode("utf-8")
             if message.startswith("coords"):
@@ -31,14 +31,17 @@ def handle_client(client):
                 else:
                     client.send("Room creation failed".encode("utf-8"))
     except ConnectionResetError:
-        print(f"Client {client.getpeername()} disconnected abruptly.")
+        print(f"Client {formatted_address} disconnected abruptly.")
     except OSError as e:
         print(f"OSError: {str(e)}")
     finally:
         if client in clients:
             clients.remove(client)
+        if address in online_players:
+            online_players.remove(address)
         client.close()
-        print(f"Connection {client.getpeername()} closed")
+        print(f"{formatted_address} đã ngắt kết nối.")   # Thêm thông báo khi ngắt kết nối
+
 
 # Function to broadcast messages to all clients except the sender
 def broadcast(message, sender):
@@ -53,21 +56,27 @@ def broadcast(message, sender):
 
 # Function to receive connections
 def receive():
-    global client
+    global client, address
     while True:
         client, address = server.accept()
-        print(f"Connection from {str(address)} accepted")
+        formatted_address = f"{address[0]}:{address[1]}"
+        print(f"Connection from {str(formatted_address)} accepted")
         clients.append(client)
+        online_players.append(address)
         # Start a new thread for each client
-        thread = threading.Thread(target=handle_client, args=(client,))
+        thread = threading.Thread(target=handle_client, args=(client,address))
         thread.start()
 
 # Function to load players from JSON file
 def load_players():
-    with open("..\data\player.json", "r") as file:
+    with open(r"..\data\player.json", "r") as file:
         data = json.load(file)
         for user in data:
             online_players.append(user["username"])
+        file.close()
+    with open(r"..\data\player.json", 'w') as file:
+        file.write("[]")
+        file.close()
 
 # Function to create a room
 def create_room(client):
