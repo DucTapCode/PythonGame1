@@ -3,6 +3,7 @@ import pygame
 import threading
 import time
 
+
 time_delay = 0.03  # 30ms
 last_send_time = time.time()
 
@@ -13,7 +14,7 @@ class Player:
         self.y = 5
         self.img = img
         self.velocity_y = 0
-        self.velo = 10
+        self.velo = 3.5
         self.gravity = 0.5
         self.mm_x = [False, False]
         self.mm_y = [False, False]
@@ -46,7 +47,7 @@ client = connect_to_server()
 if client:
     pygame.init()
     pygame.display.set_caption("tnhthatbongcon")
-    scr = pygame.display.set_mode((1350, 700), pygame.NOFRAME)
+    scr = pygame.display.set_mode((1350, 700))
     width, height = scr.get_size()
 
     FPS = 144
