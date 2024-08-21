@@ -30,8 +30,6 @@ def handle_client(client, address):
                     client.send(f"Room {room_name} created".encode("utf-8"))
                 else:
                     client.send("Room creation failed".encode("utf-8"))
-    except ConnectionResetError:
-        print(f"Client {formatted_address} disconnected abruptly.")
     except OSError as e:
         print(f"OSError: {str(e)}")
     finally:
