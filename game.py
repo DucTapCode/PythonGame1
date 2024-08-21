@@ -3,7 +3,7 @@ import pygame
 import threading
 import time
 
-time_delay = 0.27  # 30ms
+time_delay = 0.27
 last_send_time = time.time()
 
 
@@ -12,6 +12,7 @@ class Player:
         self.x = 5
         self.y = 5
         self.img = img
+        self.jumpped = False
         self.velocity_y = 0
         self.velo = 3.5
         self.gravity = 0.5
@@ -24,7 +25,6 @@ class Player:
         self.direction = False
         self.previous_x = 5
         self.other_direction = False
-        self.gravity = 0.5
 
 def connect_to_server():
     try:
@@ -38,6 +38,10 @@ def connect_to_server():
         print(f"Server đang đóng hoặc xảy ra lỗi: {str(e)}")
     return None
 
+def jump(main):
+    if not main.jumpped:  # Only allow jumping if not already in the air
+        main.velocity_y = -10  # Initial jump velocity
+        main.jumpped = True
 
 # Kết nối tới server
 client = connect_to_server()
@@ -62,7 +66,7 @@ if client:
                     parts = message.split()
                     if len(parts) == 4:
                         _, received_x, received_y, received_direction = parts
-                        main.other_x, main.other_y = int(received_x), int(received_y)
+                        main.other_x, main.other_y = int(float(received_x)), int(float(received_y))
                         main.other_direction = received_direction == "True"
             except Exception as e:
                 print(f"Error receiving data: {str(e)}")
@@ -73,6 +77,8 @@ if client:
     while True:
         moved = False
         main.previous_x = main.x
+        
+        # Apply horizontal movement
         if (
             main.x + (main.mm_x[0] - main.mm_x[1]) * main.velo > 0
             and main.x + (main.mm_x[0] - main.mm_x[1]) * main.velo
@@ -80,19 +86,15 @@ if client:
         ):
             main.x += (main.mm_x[0] - main.mm_x[1]) * main.velo
             moved = True
+        
+        # Apply gravity and vertical movement
         main.velocity_y += main.gravity
-        if (
-            main.y + (main.mm_y[0] - main.mm_y[1]) * main.velo > 0
-            and main.y + (main.mm_y[0] - main.mm_y[1]) * main.velo
-            < height - main.kaoruka_hei
-        ):
-            main.y += main.velocity_y
-            moved = True
-        else:
-            # Khi chạm mốc giới hạn chiều cao
-            if main.y + main.velocity_y >= height - main.kaoruka_hei:
-                main.velocity_y = 0
-                main.y = height - main.kaoruka_hei
+        main.y += main.velocity_y
+        
+        if main.y >= height - main.kaoruka_hei:
+            main.y = height - main.kaoruka_hei
+            main.velocity_y = 0
+            main.jumpped = False  # Allow jumping again after landing
 
         if client:
             try:
@@ -120,7 +122,7 @@ if client:
                     main.mm_x[0] = True
                     main.direction = True
                 elif event.key == pygame.K_UP:
-                    main.mm_y[1] = True
+                    jump(main)  # Call jump function
                 elif event.key == pygame.K_DOWN:
                     main.mm_y[0] = True
             if event.type == pygame.KEYUP:
@@ -128,8 +130,6 @@ if client:
                     main.mm_x[1] = False
                 elif event.key == pygame.K_RIGHT:
                     main.mm_x[0] = False
-                elif event.key == pygame.K_UP:
-                    main.mm_y[1] = False
                 elif event.key == pygame.K_DOWN:
                     main.mm_y[0] = False
 
