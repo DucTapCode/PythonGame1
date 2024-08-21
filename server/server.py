@@ -95,5 +95,5 @@ if __name__ == "__main__":
     load_players()
     try:
         receive()
-    except (Exception,OSError) as e:
+    except (Exception) as e:
         print("Đã xảy ra một số lỗi")

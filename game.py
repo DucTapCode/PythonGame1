@@ -46,7 +46,6 @@ def receive_data():
             message = client.recv(1024).decode("utf-8")
             if message.startswith("coords"):
                 parts = message.split()
-                print(parts)
                 if len(parts) == 4:
                     _, received_x, received_y, received_direction = parts
                     main.other_x, main.other_y = int(received_x), int(received_y)
