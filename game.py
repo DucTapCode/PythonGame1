@@ -3,8 +3,7 @@ import pygame
 import threading
 import time
 
-
-time_delay = 0.027  # 27ms
+time_delay = 0.27  # 30ms
 last_send_time = time.time()
 
 
@@ -25,7 +24,7 @@ class Player:
         self.direction = False
         self.previous_x = 5
         self.other_direction = False
-
+        self.gravity = 0.5
 
 def connect_to_server():
     try:
@@ -47,7 +46,7 @@ client = connect_to_server()
 if client:
     pygame.init()
     pygame.display.set_caption("tnhthatbongcon")
-    scr = pygame.display.set_mode((1350, 700))
+    scr = pygame.display.set_mode((1350, 700), pygame.NOFRAME)
     width, height = scr.get_size()
 
     FPS = 144
@@ -81,13 +80,19 @@ if client:
         ):
             main.x += (main.mm_x[0] - main.mm_x[1]) * main.velo
             moved = True
+        main.velocity_y += main.gravity
         if (
             main.y + (main.mm_y[0] - main.mm_y[1]) * main.velo > 0
             and main.y + (main.mm_y[0] - main.mm_y[1]) * main.velo
             < height - main.kaoruka_hei
         ):
-            main.y += (main.mm_y[0] - main.mm_y[1]) * main.velo
+            main.y += main.velocity_y
             moved = True
+        else:
+            # Khi chạm mốc giới hạn chiều cao
+            if main.y + main.velocity_y >= height - main.kaoruka_hei:
+                main.velocity_y = 0
+                main.y = height - main.kaoruka_hei
 
         if client:
             try:
