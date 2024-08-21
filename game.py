@@ -2,7 +2,23 @@ import pygame
 import socket
 import threading
 import tkinter
-from Python.Online.PythonGame1.login import WHITE
+
+class Player:
+    def __init__(self, img):
+        self.x = 5
+        self.y = 5
+        self.img = img
+        self.velocity_y = 0
+        self.velo = 1.3
+        self.gravity = 0.5
+        self.mm_x = [False, False]
+        self.mm_y = [False, False]
+        self.kaoruka_wid = img.get_width()
+        self.kaoruka_hei = img.get_height()
+        self.mm_x = [False, False]
+        self.mm_y = [False, False]
+        self.other_x, self.other_y = 5,5
+
 
 # Kết nối tới server
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -10,33 +26,27 @@ client.connect(("116.106.225.168", 1512))
 
 pygame.init()
 pygame.display.set_caption("tnhthatbongcon")
-scr = pygame.display.set_mode((1100,550))
+scr = pygame.display.set_mode((1100, 550))
 width, height = scr.get_size()
 
 FPS = 60
 clock = pygame.time.Clock()
-kaoruka = pygame.image.load("player.png")
-kaoruka_wid = kaoruka.get_width()
-kaoruka_hei = kaoruka.get_height()
-velo = 7
-x = 5
-y = 5
-mm_x = [False, False]
-mm_y = [False, False]
-other_x, other_y = 5, 5  # Vị trí của người chơi khác
+img = pygame.image.load("player.png")
+main = Player(img)
 
 
 # Hàm để nhận dữ liệu từ server
 def receive_data():
-    global other_x, other_y
     while True:
         try:
             message = client.recv(1024).decode("utf-8")
             if message.startswith("coords"):
                 parts = message.split()
-                if len(parts) == 3:  # Đảm bảo nhận đúng 3 phần
+                if len(parts) == 3:
                     _, received_x, received_y = parts
-                    other_x, other_y = int(received_x), int(received_y)
+                    main.other_x, main.other_y = int(float(received_x)), int(
+                        float(received_y)
+                    )
         except Exception as e:
             print(f"Error receiving data: {str(e)}")
             break
@@ -49,21 +59,21 @@ while True:
     moved = False
 
     if (
-        x + (mm_x[0] - mm_x[1]) * velo > 0
-        and x + (mm_x[0] - mm_x[1]) * velo < width - kaoruka_wid
+        main.x + (main.mm_x[0] - main.mm_x[1]) * main.velo > 0
+        and main.x + (main.mm_x[0] - main.mm_x[1]) * main.velo < 1100
     ):
-        x += (mm_x[0] - mm_x[1]) * velo
+        main.x += (main.mm_x[0] - main.mm_x[1]) * main.velo
         moved = True
     if (
-        y + (mm_y[0] - mm_y[1]) * velo > 0
-        and y + (mm_y[0] - mm_y[1]) * velo < height - kaoruka_hei
+        main.y + (main.mm_y[0] - main.mm_y[1]) * main.velo > 0
+        and main.y + (main.mm_y[0] - main.mm_y[1]) * main.velo < 550
     ):
-        y += (mm_y[0] - mm_y[1]) * velo
+        main.y += (main.mm_y[0] - main.mm_y[1]) * main.velo
         moved = True
 
     # Gửi tọa độ hiện tại tới server nếu có thay đổi
     if moved:
-        client.send(f"coords {x} {y}".encode("utf-8"))
+        client.send(f"coords {main.x} {main.y}".encode("utf-8"))
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -72,26 +82,26 @@ while True:
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
-                mm_x[1] = True
+                main.mm_x[1] = True
             elif event.key == pygame.K_RIGHT:
-                mm_x[0] = True
+                main.mm_x[0] = True
             elif event.key == pygame.K_UP:
-                mm_y[1] = True
+                main.mm_y[1] = True
             elif event.key == pygame.K_DOWN:
-                mm_y[0] = True
+                main.mm_y[0] = True
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_LEFT:
-                mm_x[1] = False
+                main.mm_x[1] = False
             elif event.key == pygame.K_RIGHT:
-                mm_x[0] = False
+                main.mm_x[0] = False
             elif event.key == pygame.K_UP:
-                mm_y[1] = False
+                main.mm_y[1] = False
             elif event.key == pygame.K_DOWN:
-                mm_y[0] = False
+                main.mm_y[0] = False
 
     # Vẽ lại màn hình với các vị trí mới
-    scr.fill(WHITE)
-    scr.blit(kaoruka, (x, y))  # Vẽ người chơi hiện tại
-    scr.blit(kaoruka, (other_x, other_y))  # Vẽ người chơi khác
+    scr.fill((0, 255, 0))
+    scr.blit(main.img, (main.x, main.y))  # Vẽ người chơi hiện tại
+    scr.blit(main.img, (main.other_x, main.other_y))  # Vẽ người chơi khác
     pygame.display.flip()
     clock.tick(FPS)

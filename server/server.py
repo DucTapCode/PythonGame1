@@ -1,18 +1,23 @@
 import socket
 import threading
 import json
+import sys
 
+# Variables
 Host_ip = "0.0.0.0"
 Host_port = 1512
 
+# Setup server
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind((Host_ip, Host_port))
 server.listen()
 
+# Data
 clients = []
 online_players = []
 rooms = []
 
+# Function to handle individual client
 def handle_client(client):
     try:
         while True:
@@ -35,7 +40,7 @@ def handle_client(client):
         client.close()
         print(f"Connection {client.getpeername()} closed")
 
-
+# Function to broadcast messages to all clients except the sender
 def broadcast(message, sender):
     for client in clients:
         if client != sender:
@@ -43,6 +48,10 @@ def broadcast(message, sender):
                 client.send(message.encode("utf-8"))
             except Exception as e:
                 print(f"Error broadcasting message: {str(e)}")
+                clients.remove(client)
+                client.close()
+
+# Function to receive connections
 def receive():
     global client
     while True:
@@ -53,12 +62,14 @@ def receive():
         thread = threading.Thread(target=handle_client, args=(client,))
         thread.start()
 
+# Function to load players from JSON file
 def load_players():
     with open("..\data\player.json", "r") as file:
         data = json.load(file)
         for user in data:
             online_players.append(user["username"])
 
+# Function to create a room
 def create_room(client):
     try:
         client.send("Enter room name:".encode("utf-8"))
@@ -70,6 +81,7 @@ def create_room(client):
         print(f"Room creation failed: {str(e)}")
     return None
 
+# Main server loop
 if __name__ == "__main__":
     print("Server is listening...")
     load_players()
