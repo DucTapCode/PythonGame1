@@ -18,6 +18,8 @@ class Player:
         self.mm_x = [False, False]
         self.mm_y = [False, False]
         self.other_x, self.other_y = 5,5
+        self.direction=False
+
 
 
 # Kết nối tới server
@@ -83,8 +85,10 @@ while True:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
                 main.mm_x[1] = True
+                main.direction=False
             elif event.key == pygame.K_RIGHT:
                 main.mm_x[0] = True
+                main.direction=True
             elif event.key == pygame.K_UP:
                 main.mm_y[1] = True
             elif event.key == pygame.K_DOWN:
@@ -101,7 +105,10 @@ while True:
 
     # Vẽ lại màn hình với các vị trí mới
     scr.fill((0, 255, 0))
-    scr.blit(main.img, (main.x, main.y))  # Vẽ người chơi hiện tại
+    if(main.direction==False):
+        scr.blit(main.img, (main.x, main.y))  # Vẽ người chơi hiện tại
+    else:
+        scr.blit(pygame.transform.flip(img,True,False),(main.x,main.y)) # Vẽ người chơi hiện tại
     scr.blit(main.img, (main.other_x, main.other_y))  # Vẽ người chơi khác
     pygame.display.flip()
     clock.tick(FPS)
