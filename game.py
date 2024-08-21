@@ -44,7 +44,7 @@ client = connect_to_server()
 if client:
     pygame.init()
     pygame.display.set_caption("tnhthatbongcon")
-    scr = pygame.display.set_mode((1100, 550))
+    scr = pygame.display.set_mode((1920, 1080),pygame.FULLSCREEN)
     width, height = scr.get_size()
 
     FPS = 60
@@ -73,13 +73,13 @@ if client:
         main.previous_x = main.x
         if (
             main.x + (main.mm_x[0] - main.mm_x[1]) * main.velo > 0
-            and main.x + (main.mm_x[0] - main.mm_x[1]) * main.velo < 1100
+            and main.x + (main.mm_x[0] - main.mm_x[1]) * main.velo < width-main.kaoruka_wid
         ):
             main.x += (main.mm_x[0] - main.mm_x[1]) * main.velo
             moved = True
         if (
             main.y + (main.mm_y[0] - main.mm_y[1]) * main.velo > 0
-            and main.y + (main.mm_y[0] - main.mm_y[1]) * main.velo < 550
+            and main.y + (main.mm_y[0] - main.mm_y[1]) * main.velo < height-main.kaoruka_hei
         ):
             main.y += (main.mm_y[0] - main.mm_y[1]) * main.velo
             moved = True
