@@ -15,16 +15,26 @@ server.listen()
 # Data
 clients = []
 online_players = []
+address_list = []
 rooms = []
 
 # Function to handle individual client
 def handle_client(client, address):
     try:
-        formatted_address = f"{address[0]}:{address[1]}"
         while True:
             message = client.recv(1024).decode("utf-8")
             if message.startswith("coords"):
                 broadcast(message, client)
+            elif message.startswith("username"):
+                print(message)
+                parts = message.split()
+                if len(parts) == 2:
+                    _,username = parts
+                    if username not in online_players:
+                        client.send('True'.encode('utf-8'))
+                        online_players.append(username)
+                    else: 
+                        pass
             elif message == "room_name":
                 room_name = create_room(client)
                 if room_name:
@@ -36,10 +46,12 @@ def handle_client(client, address):
     finally:
         if client in clients:
             clients.remove(client)
-        if address in online_players:
-            online_players.remove(address)
+        if address in address_list:
+            address_list.remove(address)
+        if username in online_players:
+            online_players.remove(username)
         client.close()
-        print(f"{formatted_address} đã ngắt kết nối.")   # Thêm thông báo khi ngắt kết nối
+        print(f"{username} đã ngắt kết nối.")   # Thêm thông báo khi ngắt kết nối
 
 
 # Function to broadcast messages to all clients except the sender
@@ -61,7 +73,7 @@ def receive():
         formatted_address = f"{address[0]}:{address[1]}"
         print(f"Connection from {str(formatted_address)} accepted")
         clients.append(client)
-        online_players.append(address)
+        address_list.append(address)
         # Start a new thread for each client
         thread = threading.Thread(target=handle_client, args=(client,address))
         thread.start()

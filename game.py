@@ -1,7 +1,9 @@
 import socket
 import pygame
 import threading
+import time
 
+time_delay = 0.05 #50ms 
 
 class Player:
     def __init__(self, img):
@@ -44,7 +46,7 @@ client = connect_to_server()
 if client:
     pygame.init()
     pygame.display.set_caption("tnhthatbongcon")
-    scr = pygame.display.set_mode((1920, 1080),pygame.FULLSCREEN)
+    scr = pygame.display.set_mode((1920, 1080),pygame.NOFRAME)
     width, height = scr.get_size()
 
     FPS = 60
