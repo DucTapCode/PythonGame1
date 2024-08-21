@@ -3,7 +3,9 @@ import pygame
 import threading
 import time
 
-time_delay = 0.05 #50ms 
+time_delay = 0.05  # 50ms
+last_send_time = time.time()
+
 
 class Player:
     def __init__(self, img):
@@ -17,8 +19,6 @@ class Player:
         self.mm_y = [False, False]
         self.kaoruka_wid = img.get_width()
         self.kaoruka_hei = img.get_height()
-        self.mm_x = [False, False]
-        self.mm_y = [False, False]
         self.other_x = 5
         self.other_y = 5
         self.direction = False
@@ -46,7 +46,7 @@ client = connect_to_server()
 if client:
     pygame.init()
     pygame.display.set_caption("tnhthatbongcon")
-    scr = pygame.display.set_mode((1920, 1080),pygame.NOFRAME)
+    scr = pygame.display.set_mode((1920, 1080), pygame.NOFRAME)
     width, height = scr.get_size()
 
     FPS = 60
@@ -75,21 +75,27 @@ if client:
         main.previous_x = main.x
         if (
             main.x + (main.mm_x[0] - main.mm_x[1]) * main.velo > 0
-            and main.x + (main.mm_x[0] - main.mm_x[1]) * main.velo < width-main.kaoruka_wid
+            and main.x + (main.mm_x[0] - main.mm_x[1]) * main.velo
+            < width - main.kaoruka_wid
         ):
             main.x += (main.mm_x[0] - main.mm_x[1]) * main.velo
             moved = True
         if (
             main.y + (main.mm_y[0] - main.mm_y[1]) * main.velo > 0
-            and main.y + (main.mm_y[0] - main.mm_y[1]) * main.velo < height-main.kaoruka_hei
+            and main.y + (main.mm_y[0] - main.mm_y[1]) * main.velo
+            < height - main.kaoruka_hei
         ):
             main.y += (main.mm_y[0] - main.mm_y[1]) * main.velo
             moved = True
 
         if client:
             try:
-                if moved:
-                    client.send(f"coords {main.x} {main.y} {main.direction}".encode("utf-8"))
+                current_time = time.time()
+                if moved and (current_time - last_send_time >= time_delay):
+                    client.send(
+                        f"coords {main.x} {main.y} {main.direction}".encode("utf-8")
+                    )
+                    last_send_time = current_time  # Update the last send time
             except OSError:
                 print("Server đang đóng hoặc xảy ra lỗi khi gửi dữ liệu.")
                 client.close()
@@ -122,10 +128,10 @@ if client:
                     main.mm_y[0] = False
 
         scr.fill((0, 255, 0))
-        if main.previous_x<main.x:
-            main.direction == True
-        if main.previous_x>main.x:
-            main.direction == False
+        if main.previous_x < main.x:
+            main.direction = True
+        if main.previous_x > main.x:
+            main.direction = False
         if main.direction:
             scr.blit(pygame.transform.flip(main.img, True, False), (main.x, main.y))
         else:
@@ -133,7 +139,8 @@ if client:
 
         if main.other_direction:
             scr.blit(
-                pygame.transform.flip(main.img, True, False), (main.other_x, main.other_y)
+                pygame.transform.flip(main.img, True, False),
+                (main.other_x, main.other_y),
             )
         else:
             scr.blit(main.img, (main.other_x, main.other_y))

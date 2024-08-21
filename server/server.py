@@ -1,8 +1,7 @@
-import os
 import socket
 import threading
 import json
-import sys
+
 # Variables
 Host_ip = "0.0.0.0"
 Host_port = 1512
@@ -18,8 +17,10 @@ online_players = []
 address_list = []
 rooms = []
 
+
 # Function to handle individual client
 def handle_client(client, address):
+    username = None  # Initialize username with a default value
     try:
         while True:
             message = client.recv(1024).decode("utf-8")
@@ -29,12 +30,14 @@ def handle_client(client, address):
                 print(message)
                 parts = message.split()
                 if len(parts) == 2:
-                    _,username = parts
+                    _, username = parts
                     if username not in online_players:
-                        client.send('True'.encode('utf-8'))
+                        client.send("True".encode("utf-8"))
                         online_players.append(username)
-                    else: 
-                        pass
+                    else:
+                        client.send(
+                            "False".encode("utf-8")
+                        )  # Optional: inform user if username is taken
             elif message == "room_name":
                 room_name = create_room(client)
                 if room_name:
@@ -51,7 +54,8 @@ def handle_client(client, address):
         if username in online_players:
             online_players.remove(username)
         client.close()
-        print(f"{username} đã ngắt kết nối.")   # Thêm thông báo khi ngắt kết nối
+        if username:
+            print(f"{username} đã ngắt kết nối.")  # Thêm thông báo khi ngắt kết nối
 
 
 # Function to broadcast messages to all clients except the sender
@@ -65,6 +69,7 @@ def broadcast(message, sender):
                 clients.remove(client)
                 client.close()
 
+
 # Function to receive connections
 def receive():
     global client, address
@@ -75,8 +80,9 @@ def receive():
         clients.append(client)
         address_list.append(address)
         # Start a new thread for each client
-        thread = threading.Thread(target=handle_client, args=(client,address))
+        thread = threading.Thread(target=handle_client, args=(client, address))
         thread.start()
+
 
 # Function to load players from JSON file
 def load_players():
@@ -85,9 +91,10 @@ def load_players():
         for user in data:
             online_players.append(user["username"])
         file.close()
-    with open(r"..\data\player.json", 'w') as file:
+    with open(r"..\data\player.json", "w") as file:
         file.write("[]")
         file.close()
+
 
 # Function to create a room
 def create_room(client):
@@ -101,11 +108,12 @@ def create_room(client):
         print(f"Room creation failed: {str(e)}")
     return None
 
+
 # Main server loop
 if __name__ == "__main__":
     print("Server is listening...")
     load_players()
     try:
         receive()
-    except (Exception) as e:
+    except Exception as e:
         print("Đã xảy ra một số lỗi")
