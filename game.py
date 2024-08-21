@@ -4,7 +4,7 @@ import threading
 import time
 
 
-time_delay = 0.03  # 30ms
+time_delay = 0.027  # 27ms
 last_send_time = time.time()
 
 
