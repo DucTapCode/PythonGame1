@@ -120,6 +120,10 @@ if client:
                     main.mm_y[0] = False
 
         scr.fill((0, 255, 0))
+        if main.previous_x<main.x:
+            main.direction == True
+        if main.previous_x>main.x:
+            main.direction == False
         if main.direction:
             scr.blit(pygame.transform.flip(main.img, True, False), (main.x, main.y))
         else:
