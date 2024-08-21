@@ -96,8 +96,10 @@ while True:
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_LEFT:
                 main.mm_x[1] = False
+                main.direction=True
             elif event.key == pygame.K_RIGHT:
                 main.mm_x[0] = False
+                main.direction=False
             elif event.key == pygame.K_UP:
                 main.mm_y[1] = False
             elif event.key == pygame.K_DOWN:
