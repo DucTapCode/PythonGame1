@@ -63,7 +63,7 @@ if client:
 
     FPS = 144
     clock = pygame.time.Clock()
-    img = pygame.image.load("../player.png")
+    img = pygame.image.load("player.png")
     main = Player(img)
 
     def receive_data():
