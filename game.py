@@ -3,7 +3,7 @@ import pygame
 import threading
 import time
 
-time_delay = 0.27
+time_delay = 0.02
 last_send_time = time.time()
 
 
