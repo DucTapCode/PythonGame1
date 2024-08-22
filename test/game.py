@@ -11,8 +11,8 @@ class Player:
         self.img = img
         self.jumpped = False
         self.velocity_y = 0
-        self.velo = 3.5
-        self.gravity = 0.5
+        self.velo = 3
+        self.gravity = 0.6
         self.mm_x = [False, False]
         self.mm_y = [False, False]
         self.kaoruka_wid = img.get_width()
@@ -159,12 +159,12 @@ if client:
             main.direction = True
         if main.previous_x > main.x:
             main.direction = False
-        if main.direction:
+        if main.direction == "False":
             scr.blit(pygame.transform.flip(main.img, True, False), (main.x, main.y))
         else:
             scr.blit(main.img, (main.x, main.y))
 
-        if main.other_direction:
+        if main.other_direction == "False":
             scr.blit(
                 pygame.transform.flip(main.img, True, False),
                 (main.other_x, main.other_y),
