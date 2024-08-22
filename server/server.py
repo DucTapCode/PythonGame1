@@ -1,6 +1,6 @@
 import socket
 import threading
-import json
+import time
 
 # Variables
 Host_ip = "0.0.0.0"
@@ -16,17 +16,24 @@ clients = []
 online_players = []
 address_list = []
 rooms = []
+total_data_received = 0  # Biến đếm số lượng dữ liệu nhận được
+
+# Lock để đồng bộ hoá truy cập biến đếm
+data_lock = threading.Lock()
 
 
 # Function to handle individual client
 def handle_client(client, address):
+    global total_data_received 
     username = None  # Initialize username with a default value
     try:
         while True:
             message = client.recv(1024).decode("utf-8")
             if not message:  # If message is empty, the client has disconnected
                 break
-            
+            data = client.recv(1024)
+            with data_lock:
+                total_data_received += len(data)
             if message.startswith("coords"):
                 broadcast(message, client)
             elif message.startswith("username"):
@@ -48,7 +55,8 @@ def handle_client(client, address):
                 else:
                     client.send("Room creation failed".encode("utf-8"))
     except OSError as e:
-        print(f"OSError: {str(e)}")
+        if e.errno == 10054:
+            print(f"{formatted_address} đã thoát")
     finally:
         if client in clients:
             clients.remove(client)
@@ -59,6 +67,14 @@ def handle_client(client, address):
         client.close()
         if username:
             print(f"{username} đã ngắt kết nối.")  # Inform when the user disconnects
+
+
+def print_data_received():
+    global total_data_received
+    while True:
+        time.sleep(5)
+        with data_lock:
+            print(f"Tổng số dữ liệu đã nhận: {total_data_received} bytes")
 
 
 # Function to broadcast messages to all clients except the sender
@@ -76,6 +92,7 @@ def broadcast(message, sender):
 # Function to receive connections
 def receive():
     global client, address
+    global formatted_address
     while True:
         client, address = server.accept()
         formatted_address = f"{address[0]}:{address[1]}"
@@ -106,6 +123,8 @@ def create_room(client):
 # Main server loop
 if __name__ == "__main__":
     print("Server is listening...")
+    # Start the data printing thread
+    threading.Thread(target=print_data_received, daemon=True).start()
     try:
         receive()
     except Exception as e:
