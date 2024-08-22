@@ -24,6 +24,9 @@ def handle_client(client, address):
     try:
         while True:
             message = client.recv(1024).decode("utf-8")
+            if not message:  # If message is empty, the client has disconnected
+                break
+            
             if message.startswith("coords"):
                 broadcast(message, client)
             elif message.startswith("username"):
@@ -55,7 +58,7 @@ def handle_client(client, address):
             online_players.remove(username)
         client.close()
         if username:
-            print(f"{username} đã ngắt kết nối.")  # Thêm thông báo khi ngắt kết nối
+            print(f"{username} đã ngắt kết nối.")  # Inform when the user disconnects
 
 
 # Function to broadcast messages to all clients except the sender
@@ -85,15 +88,6 @@ def receive():
 
 
 # Function to load players from JSON file
-def load_players():
-    with open(r"..\data\player.json", "r") as file:
-        data = json.load(file)
-        for user in data:
-            online_players.append(user["username"])
-        file.close()
-    with open(r"..\data\player.json", "w") as file:
-        file.write("[]")
-        file.close()
 
 
 # Function to create a room
@@ -112,7 +106,6 @@ def create_room(client):
 # Main server loop
 if __name__ == "__main__":
     print("Server is listening...")
-    load_players()
     try:
         receive()
     except Exception as e:
