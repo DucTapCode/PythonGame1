@@ -25,8 +25,8 @@ class Player:
         self.other_direction = False
         self.time_delay = 0.04
         self.last_send_time = time.time()
-        self.send_threshold = 6.3
-        self.lerp_speed = 0.1
+        self.send_threshold = 5
+        self.lerp_speed = 0.07
         self.target_x = 5
         self.target_y = 5
 
