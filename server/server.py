@@ -26,6 +26,7 @@ data_lock = threading.Lock()
 def handle_client(client, address):
     global total_data_received 
     username = None  # Initialize username with a default value
+    formatted_address = f"{address[0]}:{address[1]}"
     try:
         while True:
             message = client.recv(1024).decode("utf-8")
@@ -92,7 +93,6 @@ def broadcast(message, sender):
 # Function to receive connections
 def receive():
     global client, address
-    global formatted_address
     while True:
         client, address = server.accept()
         formatted_address = f"{address[0]}:{address[1]}"
