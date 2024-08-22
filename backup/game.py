@@ -3,28 +3,33 @@ import pygame
 import threading
 import time
 
-time_delay = 0.27
-last_send_time = time.time()
-
 
 class Player:
     def __init__(self, img):
         self.x = 5
-        self.y = 5
         self.img = img
         self.jumpped = False
         self.velocity_y = 0
-        self.velo = 3.5
-        self.gravity = 0.5
+        self.velo = 3
+        self.gravity = 0.6
         self.mm_x = [False, False]
         self.mm_y = [False, False]
         self.kaoruka_wid = img.get_width()
         self.kaoruka_hei = img.get_height()
+        self.y = height - self.kaoruka_hei
         self.other_x = 5
         self.other_y = 5
         self.direction = False
         self.previous_x = 5
+        self.previous_y = 5
         self.other_direction = False
+        self.time_delay = 0.04
+        self.last_send_time = time.time()
+        self.send_threshold = 2
+        self.lerp_speed = 0.1
+        self.target_x = 5
+        self.target_y = height - self.kaoruka_hei
+
 
 def connect_to_server():
     try:
@@ -38,24 +43,27 @@ def connect_to_server():
         print(f"Server đang đóng hoặc xảy ra lỗi: {str(e)}")
     return None
 
+
 def jump(main):
     if not main.jumpped:  # Only allow jumping if not already in the air
         main.velocity_y = -10  # Initial jump velocity
         main.jumpped = True
+
 
 # Kết nối tới server
 client = connect_to_server()
 
 # Chỉ khởi tạo Pygame nếu kết nối thành công
 if client:
+    global width , height
     pygame.init()
     pygame.display.set_caption("tnhthatbongcon")
-    scr = pygame.display.set_mode((1350, 700), pygame.NOFRAME)
+    scr = pygame.display.set_mode((1350, 700))
     width, height = scr.get_size()
 
     FPS = 144
     clock = pygame.time.Clock()
-    img = pygame.image.load("player.png")
+    img = pygame.image.load("../player.png")
     main = Player(img)
 
     def receive_data():
@@ -66,18 +74,21 @@ if client:
                     parts = message.split()
                     if len(parts) == 4:
                         _, received_x, received_y, received_direction = parts
-                        main.other_x, main.other_y = int(float(received_x)), int(float(received_y))
+                        main.target_x, main.target_y = int(float(received_x)), int(
+                            float(received_y)
+                        )
                         main.other_direction = received_direction == "True"
             except Exception as e:
                 print(f"Error receiving data: {str(e)}")
                 break
 
-    threading.Thread(target=receive_data, daemon=True).start()
+    Thread1 = threading.Thread(target=receive_data, daemon=True)
+    Thread1.start()
 
     while True:
         moved = False
         main.previous_x = main.x
-        
+
         # Apply horizontal movement
         if (
             main.x + (main.mm_x[0] - main.mm_x[1]) * main.velo > 0
@@ -86,28 +97,37 @@ if client:
         ):
             main.x += (main.mm_x[0] - main.mm_x[1]) * main.velo
             moved = True
-        
+
         # Apply gravity and vertical movement
         main.velocity_y += main.gravity
         main.y += main.velocity_y
-        
+
         if main.y >= height - main.kaoruka_hei:
             main.y = height - main.kaoruka_hei
             main.velocity_y = 0
             main.jumpped = False  # Allow jumping again after landing
-
+        if main.other_x != main.target_x or main.other_y != main.target_y:
+            main.other_x += (main.target_x - main.other_x) * main.lerp_speed
+            main.other_y += (main.target_y - main.other_y) * main.lerp_speed
         if client:
             try:
                 current_time = time.time()
-                if moved and (current_time - last_send_time >= time_delay):
+                if (
+                    moved
+                    and (
+                        abs(main.x - main.previous_x) >= main.send_threshold
+                    )
+                    and (current_time - main.last_send_time >= main.time_delay)
+                ):
                     client.send(
                         f"coords {main.x} {main.y} {main.direction}".encode("utf-8")
                     )
-                    last_send_time = current_time  # Update the last send time
+                    main.last_send_time = current_time  # Update the last send time
             except OSError:
                 print("Server đang đóng hoặc xảy ra lỗi khi gửi dữ liệu.")
                 client.close()
                 client = None
+
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -138,12 +158,12 @@ if client:
             main.direction = True
         if main.previous_x > main.x:
             main.direction = False
-        if main.direction:
+        if main.direction == "False":
             scr.blit(pygame.transform.flip(main.img, True, False), (main.x, main.y))
         else:
             scr.blit(main.img, (main.x, main.y))
 
-        if main.other_direction:
+        if main.other_direction == "False":
             scr.blit(
                 pygame.transform.flip(main.img, True, False),
                 (main.other_x, main.other_y),

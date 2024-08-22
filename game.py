@@ -30,43 +30,24 @@ class Player:
         self.target_x = 5
         self.target_y = height - self.kaoruka_hei
 
+    def connect_to_server():
+        try:
+            client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            client.connect(("116.106.225.168", 1512))
+            print("Connected to the server successfully.")
+            return client
+        except ConnectionRefusedError:
+            print("Server hiện đang đóng")
+        except OSError as e:
+            print(f"Server đang đóng hoặc xảy ra lỗi: {str(e)}")
+        return None
 
-def connect_to_server():
-    try:
-        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client.connect(("116.106.225.168", 1512))
-        print("Connected to the server successfully.")
-        return client
-    except ConnectionRefusedError:
-        print("Server hiện đang đóng")
-    except OSError as e:
-        print(f"Server đang đóng hoặc xảy ra lỗi: {str(e)}")
-    return None
+    def jump(self):
+        if not self.jumpped:  # Only allow jumping if not already in the air
+            self.velocity_y = -10  # Initial jump velocity
+            self.jumpped = True
 
-
-def jump(main):
-    if not main.jumpped:  # Only allow jumping if not already in the air
-        main.velocity_y = -10  # Initial jump velocity
-        main.jumpped = True
-
-
-# Kết nối tới server
-client = connect_to_server()
-
-# Chỉ khởi tạo Pygame nếu kết nối thành công
-if client:
-    global width , height
-    pygame.init()
-    pygame.display.set_caption("tnhthatbongcon")
-    scr = pygame.display.set_mode((1350, 700))
-    width, height = scr.get_size()
-
-    FPS = 144
-    clock = pygame.time.Clock()
-    img = pygame.image.load("player.png")
-    main = Player(img)
-
-    def receive_data():
+    def receive_data(self):
         while client:  # Only attempt to receive if the client is connected
             try:
                 message = client.recv(1024).decode("utf-8")
@@ -82,7 +63,24 @@ if client:
                 print(f"Error receiving data: {str(e)}")
                 break
 
-    Thread1 = threading.Thread(target=receive_data, daemon=True)
+
+# Kết nối tới server
+client = Player.connect_to_server()
+
+# Chỉ khởi tạo Pygame nếu kết nối thành công
+if client:
+    global width, height
+    pygame.init()
+    pygame.display.set_caption("tnhthatbongcon")
+    scr = pygame.display.set_mode((1350, 700))
+    width, height = scr.get_size()
+
+    FPS = 144
+    clock = pygame.time.Clock()
+    img = pygame.image.load("player.png")
+    main = Player(img)
+
+    Thread1 = threading.Thread(target=main.receive_data, daemon=True)
     Thread1.start()
 
     while True:
@@ -114,9 +112,7 @@ if client:
                 current_time = time.time()
                 if (
                     moved
-                    and (
-                        abs(main.x - main.previous_x) >= main.send_threshold
-                    )
+                    and (abs(main.x - main.previous_x) >= main.send_threshold)
                     and (current_time - main.last_send_time >= main.time_delay)
                 ):
                     client.send(
@@ -127,7 +123,6 @@ if client:
                 print("Server đang đóng hoặc xảy ra lỗi khi gửi dữ liệu.")
                 client.close()
                 client = None
-
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -142,7 +137,7 @@ if client:
                     main.mm_x[0] = True
                     main.direction = True
                 elif event.key == pygame.K_UP:
-                    jump(main)  # Call jump function
+                    main.jump()  # Call jump function
                 elif event.key == pygame.K_DOWN:
                     main.mm_y[0] = True
             if event.type == pygame.KEYUP:
