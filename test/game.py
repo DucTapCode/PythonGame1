@@ -159,12 +159,12 @@ if client:
             main.direction = True
         if main.previous_x > main.x:
             main.direction = False
-        if main.direction:
+        if main.direction == "False":
             scr.blit(pygame.transform.flip(main.img, True, False), (main.x, main.y))
         else:
             scr.blit(main.img, (main.x, main.y))
 
-        if main.other_direction:
+        if main.other_direction == "False":
             scr.blit(
                 pygame.transform.flip(main.img, True, False),
                 (main.other_x, main.other_y),
