@@ -36,6 +36,7 @@ class Player:
 
     @staticmethod
     def connect_to_server():
+        global client
         try:
             client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             client.connect(("116.106.225.168", 1512))
@@ -56,6 +57,7 @@ class Player:
             self.jumpped = True
 
     def receive_data(self):
+        global message
         while self.client:  # Only attempt to receive if the client is connected
             try:
                 message = self.client.recv(1024).decode("utf-8")
@@ -67,6 +69,9 @@ class Player:
                             float(received_y)
                         )
                         self.other_direction = received_direction == "True"
+                if message.startswith("coins_pos"):
+                    parts = message.split()
+                    print(parts)
             except Exception as e:
                 print(f"Error receiving data: {str(e)}")
                 break
@@ -166,7 +171,7 @@ class Player:
                 print(f"Error in movement thread: {str(e)}")
                 self.running = False
                 break
-
+        
 # Khởi tạo Pygame và Player
 pygame.init()
 pygame.display.set_caption("tnhthatbongcon")
