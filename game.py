@@ -25,9 +25,6 @@ class Player:
         self.previous_x = 5
         self.previous_y = 5
         self.other_direction = False
-        self.time_delay = 0.04
-        self.last_send_time = time.time()
-        self.send_threshold = 2
         self.lerp_speed = 0.1
         self.target_x = 5
         self.target_y = height - self.kaoruka_hei
@@ -69,15 +66,13 @@ class Player:
                             float(received_y)
                         )
                         self.other_direction = received_direction == "True"
-                if message.startswith("coins_pos"):
-                    parts = message.split()
-                    print(parts)
+                        print(self.target_x , self.target_y)
             except Exception as e:
                 print(f"Error receiving data: {str(e)}")
                 break
 
     def movement(self):
-        while self.running:
+        while True:
             moved = False
             self.previous_x = self.x
 
@@ -104,16 +99,9 @@ class Player:
                     self.other_y += (self.target_y - self.other_y) * self.lerp_speed
                 if self.client:
                     try:
-                        current_time = time.time()
-                        if (
-                            moved
-                            and (abs(self.x - self.previous_x) >= self.send_threshold)
-                            and (current_time - self.last_send_time >= self.time_delay)
-                        ):
                             self.client.send(
                                 f"coords {self.x} {self.y} {self.direction}".encode("utf-8")
-                            )
-                            self.last_send_time = current_time  # Update the last send time
+                            )# Update the last send time
                     except OSError as e:
                         print(f"Error sending data: {str(e)}")
                         self.client.close()
