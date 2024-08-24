@@ -44,7 +44,7 @@ class Player:
     def connect_to_server():
         try:
             client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            client.connect(("116.106.225.168", 1512))
+            client.connect(("duckk.ddns.net", 1512))
             print("Bạn vừa tham gia server")
             return client
         except (ConnectionRefusedError, OSError) as e:
