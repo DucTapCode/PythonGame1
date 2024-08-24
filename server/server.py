@@ -1,11 +1,13 @@
 import socket
 import threading
 import time
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
 class Server:
-    def __init__(self, host_ip="0.0.0.0", host_port=1512):
+    def __init__(self, host_ip="0.0.0.0", host_port=1512, http_port=8080):
         self.host_ip = host_ip
         self.host_port = host_port
+        self.http_port = http_port
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.bind((self.host_ip, self.host_port))
         self.server.listen()
@@ -17,6 +19,15 @@ class Server:
         self.rooms = []
         self.total_data_received = 0
         self.data_lock = threading.Lock()
+
+        # Start HTTP server in a separate thread
+        http_server_thread = threading.Thread(target=self.start_http_server, daemon=True)
+        http_server_thread.start()
+
+    def start_http_server(self):
+        httpd = HTTPServer((self.host_ip, self.http_port), RequestHandler)
+        print(f"HTTP Server đang lắng nghe trên cổng {self.http_port}...")
+        httpd.serve_forever()
 
     def broadcast(self, message, sender=None, additional_message=None):
         full_message = message
@@ -109,6 +120,21 @@ class Server:
             self.receive()
         except Exception as e:
             print("Đã xảy ra một số lỗi")
+
+class RequestHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == "/":
+            self.send_response(200)
+            self.send_header("Content-type", "text/html")
+            self.end_headers()
+            message = "<html><body><h1>Welcome to DucTapCode `s server</h1></body></html>"
+            self.wfile.write(message.encode("utf-8"))
+        else:
+            self.send_response(404)
+            self.send_header("Content-type", "text/html")
+            self.end_headers()
+            message = "<html><body><h1>404 Not Found</h1></body></html>"
+            self.wfile.write(message.encode("utf-8"))
 
 if __name__ == "__main__":
     server = Server()
