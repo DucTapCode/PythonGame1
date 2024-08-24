@@ -28,7 +28,7 @@ class Player:
         self.other_direction = False
         self.time_delay = 0.04
         self.last_send_time = time.time()
-        self.send_threshold = 2
+        self.send_threshold = 0
         self.lerp_speed = 0.1
         self.target_x = 5
         self.target_y = height - self.kaoruka_hei
@@ -36,11 +36,10 @@ class Player:
         self.running = True  # Flag to indicate if Pygame is running
         self.coin_pos = (width - self.kaoruka_wid, height - self.kaoruka_hei)
         self.coin = True
-        
+        self.coin_sent = False
 
     @staticmethod
     def connect_to_server():
-        global client
         try:
             client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             client.connect(("116.106.225.168", 1512))
@@ -60,9 +59,19 @@ class Player:
             self.velocity_y = -10  # Initial jump velocity
             self.jumpped = True
 
+    def coin_data(self):
+        while self.client:  # Check if Pygame is still running
+            try:
+                time.sleep(1)
+                self.client.send(f"coin {self.coin}".encode("utf-8"))
+            except OSError as e:
+                if e.errno == 10053:
+                    print("Bạn đã ngắt kết nối")
+            except Exception:
+                print("Gửi dữ liệu không thành công")
     def receive_data(self):
-        global message
-        while self.client:  # Only attempt to receive if the client is connected
+        global message, client
+        while self.client and self.running:  # Only attempt to receive if the client is connected and Pygame is running
             try:
                 message = self.client.recv(1024).decode("utf-8")
                 if message.startswith("coords"):
@@ -76,6 +85,9 @@ class Player:
                 if message.startswith("coins_pos"):
                     parts = message.split()
                     print(parts)
+            except OSError as e:
+                if e.errno == 10053:
+                    print("Bạn đã ngắt kết nối")
             except Exception as e:
                 print(f"Error receiving data: {str(e)}")
                 break
@@ -86,6 +98,7 @@ class Player:
             self.previous_x = self.x
 
             try:
+
                 # Apply horizontal movement
                 if (
                     self.x + (self.mm_x[0] - self.mm_x[1]) * self.velo > 0
@@ -111,7 +124,6 @@ class Player:
                         current_time = time.time()
                         if (
                             moved
-                            and (abs(self.x - self.previous_x) >= self.send_threshold)
                             and (current_time - self.last_send_time >= self.time_delay)
                         ):
                             self.client.send(
@@ -132,6 +144,8 @@ class Player:
                         if event.type == pygame.QUIT:
                             self.running = False
                             pygame.quit()
+                            if self.client:
+                                self.client.close()
                             exit()
 
                         if event.type == pygame.KEYDOWN:
@@ -176,8 +190,15 @@ class Player:
                         else:
                             scr.blit(self.img, (self.other_x, self.other_y))
                         if self.coin:
-                            player_rect = pygame.Rect(self.x, self.y, self.kaoruka_wid, self.kaoruka_hei)
-                            coin_rect = pygame.Rect(self.coin_pos[0], self.coin_pos[1], self.kaoruka_wid, self.kaoruka_hei)
+                            player_rect = pygame.Rect(
+                                self.x, self.y, self.kaoruka_wid, self.kaoruka_hei
+                            )
+                            coin_rect = pygame.Rect(
+                                self.coin_pos[0],
+                                self.coin_pos[1],
+                                self.kaoruka_wid,
+                                self.kaoruka_hei,
+                            )
                             scr.blit(self.img, self.coin_pos)
                             if player_rect.colliderect(coin_rect):
                                 self.coin = False
@@ -187,6 +208,8 @@ class Player:
             except Exception as e:
                 print(f"Error in movement thread: {str(e)}")
                 self.running = False
+                if self.client:
+                    self.client.close()
                 break
 
 
@@ -210,6 +233,8 @@ main.connect()  # Kết nối tới server
 if main.client:
     Thread1 = threading.Thread(target=main.receive_data, daemon=True)
     Thread1.start()
+    Thread2 = threading.Thread(target=main.coin_data, daemon=True)
+    Thread2.start()
     main.movement()
 else:
     pygame.quit()

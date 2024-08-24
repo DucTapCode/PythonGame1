@@ -21,7 +21,15 @@ class Server:
         self.rooms = []
         self.total_data_received = 0  # Variable to track total data received
         self.data_lock = threading.Lock()  # Lock for synchronizing access to data
-
+    def broadcast(self, message, sender):
+        for client in self.clients:
+            if client != sender:
+                try:
+                    client.send(message.encode("utf-8"))
+                except Exception as e:
+                    print(f"Error broadcasting message: {str(e)}")
+                    self.clients.remove(client)
+                    client.close()
     # Function to handle individual client
     def handle_client(self, client, address):
         username = None  # Initialize username with a default value
@@ -34,11 +42,11 @@ class Server:
                 data = client.recv(1024)
                 with self.data_lock:
                     self.total_data_received += len(data)
-                if message.startswith("coins"):
-                    print(message)
+                if message.startswith("coin"):
                     parts = message.split()
-                    if len(parts) == 5:
-                        _, width, player_wid, height, player_hei = parts
+                    if len(parts) == 2:
+                        self.broadcast(message , None)
+                    
                 if message.startswith("coords"):
                     self.broadcast(message, client)
                 elif message.startswith("username"):
@@ -82,15 +90,7 @@ class Server:
                 print(f"Tổng số dữ liệu đã nhận: {self.total_data_received} bytes")
 
     # Function to broadcast messages to all clients except the sender
-    def broadcast(self, message, sender):
-        for client in self.clients:
-            if client != sender:
-                try:
-                    client.send(message.encode("utf-8"))
-                except Exception as e:
-                    print(f"Error broadcasting message: {str(e)}")
-                    self.clients.remove(client)
-                    client.close()
+    
 
     # Function to receive connections
     def receive(self):
