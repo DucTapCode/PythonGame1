@@ -34,6 +34,9 @@ class Player:
         self.target_y = height - self.kaoruka_hei
         self.client = None  # Initialize client as None
         self.running = True  # Flag to indicate if Pygame is running
+        self.coin_pos = (width - self.kaoruka_wid, height - self.kaoruka_hei)
+        self.coin = True
+        
 
     @staticmethod
     def connect_to_server():
@@ -172,7 +175,13 @@ class Player:
                             )
                         else:
                             scr.blit(self.img, (self.other_x, self.other_y))
-
+                        if self.coin:
+                            player_rect = pygame.Rect(self.x, self.y, self.kaoruka_wid, self.kaoruka_hei)
+                            coin_rect = pygame.Rect(self.coin_pos[0], self.coin_pos[1], self.kaoruka_wid, self.kaoruka_hei)
+                            scr.blit(self.img, self.coin_pos)
+                            if player_rect.colliderect(coin_rect):
+                                self.coin = False
+                                print("Nhặt xu thành công")
                         pygame.display.flip()
                         clock.tick(FPS)
             except Exception as e:
