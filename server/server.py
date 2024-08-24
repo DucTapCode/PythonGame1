@@ -1,7 +1,6 @@
 import socket
 import threading
 import time
-import random
 
 
 class Server:
@@ -21,15 +20,20 @@ class Server:
         self.rooms = []
         self.total_data_received = 0  # Variable to track total data received
         self.data_lock = threading.Lock()  # Lock for synchronizing access to data
-    def broadcast(self, message, sender):
+
+    def broadcast(self, message, sender=None, additional_message=None):
         for client in self.clients:
             if client != sender:
                 try:
-                    client.send(message.encode("utf-8"))
+                    full_message = message
+                    if additional_message:
+                        full_message += f"\n{additional_message}"
+                    client.send(full_message.encode("utf-8"))
                 except Exception as e:
                     print(f"Error broadcasting message: {str(e)}")
                     self.clients.remove(client)
                     client.close()
+
     # Function to handle individual client
     def handle_client(self, client, address):
         username = None  # Initialize username with a default value
@@ -44,9 +48,8 @@ class Server:
                     self.total_data_received += len(data)
                 if message.startswith("coin"):
                     parts = message.split()
-                    if len(parts) == 2:
-                        self.broadcast(message , None)
-                    
+                    if len(parts) == 3:
+                        self.broadcast(message, client)
                 if message.startswith("coords"):
                     self.broadcast(message, client)
                 elif message.startswith("username"):
@@ -79,9 +82,10 @@ class Server:
                 self.online_players.remove(username)
             client.close()
             if username:
-                print(
-                    f"{username} đã ngắt kết nối."
-                )  # Inform when the user disconnects
+                print(f"{username} đã ngắt kết nối.")
+            # Broadcast the remaining number of clients
+            remaining_clients_message = f"Số người còn lại {len(self.clients)}"
+            self.broadcast("{username} đã thoát", additional_message=remaining_clients_message)
 
     def print_data_received(self):
         while True:
@@ -89,15 +93,13 @@ class Server:
             with self.data_lock:
                 print(f"Tổng số dữ liệu đã nhận: {self.total_data_received} bytes")
 
-    # Function to broadcast messages to all clients except the sender
-    
-
     # Function to receive connections
     def receive(self):
         while True:
             client, address = self.server.accept()
             formatted_address = f"{address[0]}:{address[1]}"
             print(f"Kết nối từ {str(formatted_address)} đã được chấp nhận")
+            self.broadcast("{username} vừa tham gia server" , None)
             self.clients.append(client)
             self.address_list.append(address)
             # Start a new thread for each client

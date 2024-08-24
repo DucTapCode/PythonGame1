@@ -2,6 +2,7 @@ import socket
 import pygame
 import threading
 import time
+import os
 
 # Khởi tạo biến toàn cục cho trạng thái Pygame
 pygame_initialized = False
@@ -14,7 +15,7 @@ class Player:
         self.jumpped = False
         self.velocity_y = 0
         self.velo = 3
-        self.gravity = 0.6
+        self.gravity = 0.8
         self.mm_x = [False, False]
         self.mm_y = [False, False]
         self.kaoruka_wid = img.get_width()
@@ -29,7 +30,7 @@ class Player:
         self.time_delay = 0.04
         self.last_send_time = time.time()
         self.send_threshold = 0
-        self.lerp_speed = 0.1
+        self.lerp_speed = 0.2
         self.target_x = 5
         self.target_y = height - self.kaoruka_hei
         self.client = None  # Initialize client as None
@@ -43,7 +44,7 @@ class Player:
         try:
             client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             client.connect(("116.106.225.168", 1512))
-            print("Connected to the server successfully.")
+            print("Bạn vừa tham gia server")
             return client
         except ConnectionRefusedError:
             print("Server hiện đang đóng")
@@ -61,17 +62,24 @@ class Player:
 
     def coin_data(self):
         while self.client:  # Check if Pygame is still running
-            try:
-                time.sleep(1)
-                self.client.send(f"coin {self.coin}".encode("utf-8"))
-            except OSError as e:
-                if e.errno == 10053:
-                    print("Bạn đã ngắt kết nối")
-            except Exception:
-                print("Gửi dữ liệu không thành công")
+            if self.coin == False and not self.coin_sent:
+                try:
+                    time.sleep(1)
+                    self.coin_sent == True
+                    self.client.send(
+                        f"coin {self.coin} {self.coin_sent}".encode("utf-8")
+                    )
+                except OSError as e:
+                    if e.errno == 10053:
+                        print("Bạn đã ngắt kết nối")
+                except Exception:
+                    print("Gửi dữ liệu không thành công")
+
     def receive_data(self):
         global message, client
-        while self.client and self.running:  # Only attempt to receive if the client is connected and Pygame is running
+        while (
+            self.client and self.running
+        ):  # Only attempt to receive if the client is connected and Pygame is running
             try:
                 message = self.client.recv(1024).decode("utf-8")
                 if message.startswith("coords"):
@@ -82,9 +90,13 @@ class Player:
                             float(received_y)
                         )
                         self.other_direction = received_direction == "True"
-                if message.startswith("coins_pos"):
+                elif message.startswith("coin"):
                     parts = message.split()
-                    print(parts)
+                    if len(parts) == 3:
+                        _, received_coin, received_coin_sent = parts
+                        self.coin, self.coin_data = received_coin, received_coin_sent
+                else:
+                    print(message)
             except OSError as e:
                 if e.errno == 10053:
                     print("Bạn đã ngắt kết nối")
@@ -122,9 +134,8 @@ class Player:
                 if self.client:
                     try:
                         current_time = time.time()
-                        if (
-                            moved
-                            and (current_time - self.last_send_time >= self.time_delay)
+                        if moved and (
+                            current_time - self.last_send_time >= self.time_delay
                         ):
                             self.client.send(
                                 f"coords {self.x} {self.y} {self.direction}".encode(
@@ -215,10 +226,10 @@ class Player:
 
 # Khởi tạo Pygame và Player
 pygame.init()
+os.system("cls")
 pygame.display.set_caption("tnhthatbongcon")
 scr = pygame.display.set_mode((1350, 700))
 width, height = scr.get_size()
-
 FPS = 144
 clock = pygame.time.Clock()
 img = pygame.image.load("player.png")
