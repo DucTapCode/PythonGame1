@@ -26,9 +26,9 @@ class Player:
         self.previous_x = 5
         self.previous_y = 5
         self.other_direction = False
-        self.time_delay = 0.01
+        self.time_delay = 0.04
         self.last_send_time = time.time()
-        self.send_threshold = 3
+        self.send_threshold = 2
         self.lerp_speed = 0.1
         self.target_x = 5
         self.target_y = height - self.kaoruka_hei

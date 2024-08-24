@@ -39,7 +39,6 @@ class Server:
                     parts = message.split()
                     if len(parts) == 5:
                         _, width, player_wid, height, player_hei = parts
-                        Thread3.start()
                 if message.startswith("coords"):
                     self.broadcast(message, client)
                 elif message.startswith("username"):
