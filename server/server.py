@@ -2,10 +2,8 @@ import socket
 import threading
 import time
 
-
 class Server:
     def __init__(self, host_ip="0.0.0.0", host_port=1512):
-        # Variables
         self.host_ip = host_ip
         self.host_port = host_port
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -13,79 +11,71 @@ class Server:
         self.server.listen()
         print("Server đang lắng nghe...")
 
-        # Data
         self.clients = []
         self.online_players = []
         self.address_list = []
         self.rooms = []
-        self.total_data_received = 0  # Variable to track total data received
-        self.data_lock = threading.Lock()  # Lock for synchronizing access to data
+        self.total_data_received = 0
+        self.data_lock = threading.Lock()
 
     def broadcast(self, message, sender=None, additional_message=None):
+        full_message = message
+        if additional_message:
+            full_message += f"\n{additional_message}"
         for client in self.clients:
             if client != sender:
                 try:
-                    full_message = message
-                    if additional_message:
-                        full_message += f"\n{additional_message}"
                     client.send(full_message.encode("utf-8"))
                 except Exception as e:
                     print(f"Error broadcasting message: {str(e)}")
                     self.clients.remove(client)
                     client.close()
 
-    # Function to handle individual client
     def handle_client(self, client, address):
-        username = None  # Initialize username with a default value
+        username = None
         formatted_address = f"{address[0]}:{address[1]}"
         try:
             while True:
                 message = client.recv(1024).decode("utf-8")
-                if not message:  # If message is empty, the client has disconnected
+                if not message:
                     break
-                data = client.recv(1024)
+
                 with self.data_lock:
-                    self.total_data_received += len(data)
-                if message.startswith("coin"):
-                    parts = message.split()
-                    if len(parts) == 3:
-                        self.broadcast(message, client)
-                if message.startswith("coords"):
+                    self.total_data_received += len(message)
+
+                if message == "coin_collected":
+                    self.broadcast(message)
+                elif message.startswith("coords"):
                     self.broadcast(message, client)
                 elif message.startswith("username"):
-                    print(message)
-                    parts = message.split()
-                    if len(parts) == 2:
-                        _, username = parts
-                        if username not in self.online_players:
-                            client.send("True".encode("utf-8"))
-                            self.online_players.append(username)
-                        else:
-                            client.send(
-                                "False".encode("utf-8")
-                            )  # Inform user if username is taken
+                    username = message.split()[1]
+                    if username not in self.online_players:
+                        client.send("True".encode("utf-8"))
+                        self.online_players.append(username)
+                    else:
+                        client.send("False".encode("utf-8"))
                 elif message == "room_name":
                     room_name = self.create_room(client)
                     if room_name:
                         client.send(f"Room {room_name} created".encode("utf-8"))
                     else:
                         client.send("Room creation failed".encode("utf-8"))
+
         except OSError as e:
             if e.errno == 10054:
                 print(f"{formatted_address} đã thoát")
         finally:
-            if client in self.clients:
-                self.clients.remove(client)
-            if address in self.address_list:
-                self.address_list.remove(address)
-            if username in self.online_players:
-                self.online_players.remove(username)
-            client.close()
-            if username:
-                print(f"{username} đã ngắt kết nối.")
-            # Broadcast the remaining number of clients
-            remaining_clients_message = f"Số người còn lại {len(self.clients)}"
-            self.broadcast("{username} đã thoát", additional_message=remaining_clients_message)
+            self.cleanup(client, address, username)
+            self.broadcast(f"{username} đã thoát", additional_message=f"Số người còn lại {len(self.clients)}")
+
+    def cleanup(self, client, address, username):
+        if client in self.clients:
+            self.clients.remove(client)
+        if address in self.address_list:
+            self.address_list.remove(address)
+        if username in self.online_players:
+            self.online_players.remove(username)
+        client.close()
 
     def print_data_received(self):
         while True:
@@ -93,22 +83,16 @@ class Server:
             with self.data_lock:
                 print(f"Tổng số dữ liệu đã nhận: {self.total_data_received} bytes")
 
-    # Function to receive connections
     def receive(self):
         while True:
             client, address = self.server.accept()
             formatted_address = f"{address[0]}:{address[1]}"
             print(f"Kết nối từ {str(formatted_address)} đã được chấp nhận")
-            self.broadcast("{username} vừa tham gia server" , None)
             self.clients.append(client)
             self.address_list.append(address)
-            # Start a new thread for each client
-            Thread1 = threading.Thread(
-                target=self.handle_client, args=(client, address)
-            )
-            Thread1.start()
 
-    # Function to create a room
+            threading.Thread(target=self.handle_client, args=(client, address)).start()
+
     def create_room(self, client):
         try:
             client.send("Enter room name:".encode("utf-8"))
@@ -120,18 +104,13 @@ class Server:
             print(f"Room creation failed: {str(e)}")
         return None
 
-    # Main method to start the server
     def start(self):
         try:
             self.receive()
         except Exception as e:
             print("Đã xảy ra một số lỗi")
 
-
-# Main server loop
 if __name__ == "__main__":
     server = Server()
-    Thread2 = threading.Thread(target=server.print_data_received, daemon=True)
-    Thread2.start()
-
+    threading.Thread(target=server.print_data_received, daemon=True).start()
     server.start()
