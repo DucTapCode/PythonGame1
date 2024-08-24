@@ -6,6 +6,7 @@ import time
 # Khởi tạo biến toàn cục cho trạng thái Pygame
 pygame_initialized = False
 
+
 class Player:
     def __init__(self, img):
         self.x = 5
@@ -25,6 +26,9 @@ class Player:
         self.previous_x = 5
         self.previous_y = 5
         self.other_direction = False
+        self.time_delay = 0.01
+        self.last_send_time = time.time()
+        self.send_threshold = 3
         self.lerp_speed = 0.1
         self.target_x = 5
         self.target_y = height - self.kaoruka_hei
@@ -66,13 +70,15 @@ class Player:
                             float(received_y)
                         )
                         self.other_direction = received_direction == "True"
-                        print(self.target_x , self.target_y)
+                if message.startswith("coins_pos"):
+                    parts = message.split()
+                    print(parts)
             except Exception as e:
                 print(f"Error receiving data: {str(e)}")
                 break
 
     def movement(self):
-        while True:
+        while self.running:
             moved = False
             self.previous_x = self.x
 
@@ -99,9 +105,20 @@ class Player:
                     self.other_y += (self.target_y - self.other_y) * self.lerp_speed
                 if self.client:
                     try:
+                        current_time = time.time()
+                        if (
+                            moved
+                            and (abs(self.x - self.previous_x) >= self.send_threshold)
+                            and (current_time - self.last_send_time >= self.time_delay)
+                        ):
                             self.client.send(
-                                f"coords {self.x} {self.y} {self.direction}".encode("utf-8")
-                            )# Update the last send time
+                                f"coords {self.x} {self.y} {self.direction}".encode(
+                                    "utf-8"
+                                )
+                            )
+                            self.last_send_time = (
+                                current_time  # Update the last send time
+                            )
                     except OSError as e:
                         print(f"Error sending data: {str(e)}")
                         self.client.close()
@@ -141,7 +158,10 @@ class Player:
                         if self.previous_x > self.x:
                             self.direction = False
                         if not self.direction:
-                            scr.blit(pygame.transform.flip(self.img, True, False), (self.x, self.y))
+                            scr.blit(
+                                pygame.transform.flip(self.img, True, False),
+                                (self.x, self.y),
+                            )
                         else:
                             scr.blit(self.img, (self.x, self.y))
 
@@ -159,7 +179,8 @@ class Player:
                 print(f"Error in movement thread: {str(e)}")
                 self.running = False
                 break
-        
+
+
 # Khởi tạo Pygame và Player
 pygame.init()
 pygame.display.set_caption("tnhthatbongcon")

@@ -3,6 +3,7 @@ import threading
 import time
 import random
 
+
 class Server:
     def __init__(self, host_ip="0.0.0.0", host_port=1512):
         # Variables
@@ -38,7 +39,6 @@ class Server:
                     parts = message.split()
                     if len(parts) == 5:
                         _, width, player_wid, height, player_hei = parts
-                        Thread3 = threading.Thread(target=server.random_coins,daemon=True,args=(width, player_wid, height, player_hei))
                         Thread3.start()
                 if message.startswith("coords"):
                     self.broadcast(message, client)
@@ -51,7 +51,9 @@ class Server:
                             client.send("True".encode("utf-8"))
                             self.online_players.append(username)
                         else:
-                            client.send("False".encode("utf-8"))  # Inform user if username is taken
+                            client.send(
+                                "False".encode("utf-8")
+                            )  # Inform user if username is taken
                 elif message == "room_name":
                     room_name = self.create_room(client)
                     if room_name:
@@ -70,7 +72,9 @@ class Server:
                 self.online_players.remove(username)
             client.close()
             if username:
-                print(f"{username} đã ngắt kết nối.")  # Inform when the user disconnects
+                print(
+                    f"{username} đã ngắt kết nối."
+                )  # Inform when the user disconnects
 
     def print_data_received(self):
         while True:
@@ -98,7 +102,9 @@ class Server:
             self.clients.append(client)
             self.address_list.append(address)
             # Start a new thread for each client
-            Thread1 = threading.Thread(target=self.handle_client, args=(client, address))
+            Thread1 = threading.Thread(
+                target=self.handle_client, args=(client, address)
+            )
             Thread1.start()
 
     # Function to create a room
@@ -120,10 +126,11 @@ class Server:
         except Exception as e:
             print("Đã xảy ra một số lỗi")
 
+
 # Main server loop
 if __name__ == "__main__":
     server = Server()
-    Thread2 = threading.Thread(target=server.print_data_received,daemon=True)
+    Thread2 = threading.Thread(target=server.print_data_received, daemon=True)
     Thread2.start()
-    
+
     server.start()
