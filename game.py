@@ -9,7 +9,7 @@ pygame_initialized = False
 
 
 class Player:
-    def __init__(self, img):
+    def __init__(self, img , coin_img):
         self.x = 5
         self.y = 0  # Sẽ được đặt giá trị chính xác sau
         self.img = img
@@ -21,6 +21,8 @@ class Player:
         self.mm_y = [False, False]
         self.kaoruka_wid = img.get_width()
         self.kaoruka_hei = img.get_height()
+        self.coin_hei = coin_img.get_height()
+        self.coin_wid = coin_img.get_width()
         self.y = height - self.kaoruka_hei
         self.other_x = 5
         self.other_y = 5
@@ -35,11 +37,11 @@ class Player:
         self.target_y = height - self.kaoruka_hei
         self.client = None
         self.running = True
-        self.coin_pos = (width - self.kaoruka_wid, height - self.kaoruka_hei)
+        self.coin_pos = (width - self.coin_wid, height - self.coin_hei)
         self.coin = True
         self.coin_sent = False
         self.coin_collected = False
-
+        self.coin_img = coin_img
     @staticmethod
     def connect_to_server():
         try:
@@ -183,7 +185,7 @@ class Player:
         self.draw_player(self.img, self.x, self.y, self.direction)
         self.draw_player(self.img, self.other_x, self.other_y, self.other_direction)
         if not self.coin_collected and self.coin:
-            scr.blit(self.img, self.coin_pos)
+            scr.blit(self.coin_img, self.coin_pos)
         pygame.display.flip()
 
     def update_direction(self):
@@ -216,7 +218,8 @@ width, height = scr.get_size()
 FPS = 144
 clock = pygame.time.Clock()
 img = pygame.image.load("player.png")
-main = Player(img)
+coin_img = pygame.image.load("egg.png")
+main = Player(img , coin_img)
 
 # Set the global flag to indicate Pygame is initialized
 pygame_initialized = True
