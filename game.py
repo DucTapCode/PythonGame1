@@ -7,9 +7,8 @@ import os
 # Khởi tạo biến toàn cục cho trạng thái Pygame
 pygame_initialized = False
 
-
 class Player:
-    def __init__(self, img , coin_img):
+    def __init__(self, img, coin_img):
         self.x = 5
         self.y = 0  # Sẽ được đặt giá trị chính xác sau
         self.img = img
@@ -21,9 +20,11 @@ class Player:
         self.mm_y = [False, False]
         self.kaoruka_wid = img.get_width()
         self.kaoruka_hei = img.get_height()
-        self.coin_hei = coin_img.get_height()
         self.coin_wid = coin_img.get_width()
+        self.coin_hei = coin_img.get_height()
         self.y = height - self.kaoruka_hei
+        self.target_x = 5
+        self.target_y = height - self.kaoruka_hei
         self.other_x = 5
         self.other_y = 5
         self.direction = False
@@ -33,8 +34,6 @@ class Player:
         self.time_delay = 0.04
         self.last_send_time = time.time()
         self.lerp_speed = 0.2
-        self.target_x = 5
-        self.target_y = height - self.kaoruka_hei
         self.client = None
         self.running = True
         self.coin_pos = (width - self.coin_wid, height - self.coin_hei)
@@ -42,6 +41,11 @@ class Player:
         self.coin_sent = False
         self.coin_collected = False
         self.coin_img = coin_img
+        self.frame_index = 0
+        self.egg_ani = self.load_egg_animation()
+        self.frame_time = 0.1  # Thời gian giữa các khung hình của hoạt ảnh
+        self.last_frame_time = time.time()
+
     @staticmethod
     def connect_to_server():
         try:
@@ -57,8 +61,8 @@ class Player:
         self.client = self.connect_to_server()
 
     def jump(self):
-        if not self.jumpped:  # Only allow jumping if not already in the air
-            self.velocity_y = -10  # Initial jump velocity
+        if not self.jumpped:
+            self.velocity_y = -10
             self.jumpped = True
 
     def send_coin_collected(self):
@@ -93,12 +97,10 @@ class Player:
                 break
 
     def handle_coords_message(self, message):
-        parts = message.split()
-        if len(parts) == 4:
-            _, received_x, received_y, received_direction = parts
-            self.target_x = int(float(received_x))
-            self.target_y = int(float(received_y))
-            self.other_direction = received_direction == "True"
+        _, received_x, received_y, received_direction = message.split()
+        self.target_x = int(float(received_x))
+        self.target_y = int(float(received_y))
+        self.other_direction = received_direction == "True"
 
     def handle_coin_collected(self):
         self.coin = False
@@ -144,12 +146,12 @@ class Player:
         player_rect = pygame.Rect(self.x, self.y, self.kaoruka_wid, self.kaoruka_hei)
         coin_rect = pygame.Rect(self.coin_pos[0], self.coin_pos[1], self.kaoruka_wid, self.kaoruka_hei)
 
-        # Apply horizontal movement
+        # Horizontal movement
         self.x += (self.mm_x[0] - self.mm_x[1]) * self.velo
         self.x = max(0, min(self.x, width - self.kaoruka_wid))
         moved = self.previous_x != self.x
 
-        # Apply gravity and vertical movement
+        # Gravity and vertical movement
         self.velocity_y += self.gravity
         self.y += self.velocity_y
         self.y = min(self.y, height - self.kaoruka_hei)
@@ -157,11 +159,11 @@ class Player:
             self.velocity_y = 0
             self.jumpped = False
 
-        # Update other player's position
+        # Other player position update
         self.other_x += (self.target_x - self.other_x) * self.lerp_speed
         self.other_y += (self.target_y - self.other_y) * self.lerp_speed
 
-        # Send position update if player moved
+        # Send position update if moved
         if moved and time.time() - self.last_send_time >= self.time_delay:
             self.send_position_update()
 
@@ -179,13 +181,29 @@ class Player:
             self.client.close()
             self.client = None
 
+    def load_egg_animation(self):
+        egg_images = []
+        for i in range(1, 9):
+            egg_images.append(pygame.image.load(f"animations/egg/egg{i}.png"))
+        return egg_images
+
+    def update_frame(self):
+        # Cập nhật khung hình hoạt ảnh sau một khoảng thời gian nhất định
+        if time.time() - self.last_frame_time >= self.frame_time:
+            self.frame_index = (self.frame_index + 1) % len(self.egg_ani)
+            self.last_frame_time = time.time()
+
     def draw(self):
         scr.fill((0, 255, 0))
         self.update_direction()
         self.draw_player(self.img, self.x, self.y, self.direction)
         self.draw_player(self.img, self.other_x, self.other_y, self.other_direction)
+
+        # Vẽ đồng xu với hoạt ảnh
         if not self.coin_collected and self.coin:
-            scr.blit(self.coin_img, self.coin_pos)
+            self.update_frame()  # Cập nhật khung hình hoạt ảnh
+            scr.blit(self.egg_ani[self.frame_index], self.coin_pos)
+
         pygame.display.flip()
 
     def update_direction(self):
@@ -218,8 +236,8 @@ width, height = scr.get_size()
 FPS = 144
 clock = pygame.time.Clock()
 img = pygame.image.load("player.png")
-coin_img = pygame.image.load("egg.png")
-main = Player(img , coin_img)
+coin_img = pygame.image.load("animations/egg/egg1.png")
+main = Player(img, coin_img)
 
 # Set the global flag to indicate Pygame is initialized
 pygame_initialized = True
