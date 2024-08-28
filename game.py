@@ -54,7 +54,8 @@ class Player:
             print("Bạn vừa tham gia server")
             return client
         except (ConnectionRefusedError, OSError) as e:
-            print(f"Lỗi kết nối tới server: {str(e)}")
+            if e.errno == "10061":
+                print("Server hiện đang đóng")
         return None
 
     def connect(self):
@@ -184,7 +185,7 @@ class Player:
     def load_egg_animation(self):
         egg_images = []
         for i in range(1, 9):
-            egg_images.append(pygame.image.load(f"animations/egg/egg{i}.png"))
+            egg_images.append(pygame.image.load(f"assets/egg/egg{i}.png"))
         return egg_images
 
     def update_frame(self):
@@ -235,8 +236,8 @@ scr = pygame.display.set_mode((1350, 700))
 width, height = scr.get_size()
 FPS = 144
 clock = pygame.time.Clock()
-img = pygame.image.load("player.png")
-coin_img = pygame.image.load("animations/egg/egg1.png")
+img = pygame.image.load("assets/player/player1.png")
+coin_img = pygame.image.load("assets/egg/egg1.png")
 main = Player(img, coin_img)
 
 # Set the global flag to indicate Pygame is initialized
